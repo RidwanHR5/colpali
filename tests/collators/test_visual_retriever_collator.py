@@ -4,31 +4,33 @@ import pytest
 from PIL import Image
 
 from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
-from colpali_engine.models.paligemma.colpali.processing_colpali import ColPaliProcessor
+from colpali_engine.models import ColModernVBertProcessor
 
 
-class TestColPaliCollator:
+class TestColModernVBertCollator:
     @pytest.fixture(scope="class")
-    def colpali_processor_path(self) -> str:
-        return "vidore/colpali-v1.2"
-
-    @pytest.fixture(scope="class")
-    def processor_from_pretrained(self, colpali_processor_path: str) -> Generator[ColPaliProcessor, None, None]:
-        yield cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(colpali_processor_path))
+    def colmodernvbert_processor_path(self) -> str:
+        return "ModernVBERT/colmodernvbert"
 
     @pytest.fixture(scope="class")
-    def colpali_collator(
-        self, processor_from_pretrained: ColPaliProcessor
+    def processor_from_pretrained(
+        self, colmodernvbert_processor_path: str
+    ) -> Generator[ColModernVBertProcessor, None, None]:
+        yield cast(ColModernVBertProcessor, ColModernVBertProcessor.from_pretrained(colmodernvbert_processor_path))
+
+    @pytest.fixture(scope="class")
+    def colmodernvbert_collator(
+        self, processor_from_pretrained: ColModernVBertProcessor
     ) -> Generator[VisualRetrieverCollator, None, None]:
         yield VisualRetrieverCollator(processor=processor_from_pretrained)
 
-    def test_colpali_collator_call(self, colpali_collator: VisualRetrieverCollator):
+    def test_colmodernvbert_collator_call(self, colmodernvbert_collator: VisualRetrieverCollator):
         example_image = Image.new("RGB", (16, 16), color="red")
         examples = [
             {"query": "What is this?", "pos_target": example_image},
         ]
 
-        result = colpali_collator(examples)
+        result = colmodernvbert_collator(examples)
 
         assert isinstance(result, dict)
         assert "doc_input_ids" in result
@@ -37,7 +39,7 @@ class TestColPaliCollator:
         assert "query_input_ids" in result
         assert "query_attention_mask" in result
 
-    def test_colpali_collator_call_with_neg_images(self, colpali_collator: VisualRetrieverCollator):
+    def test_colmodernvbert_collator_call_with_neg_images(self, colmodernvbert_collator: VisualRetrieverCollator):
         example_image = Image.new("RGB", (16, 16), color="red")
         neg_image = Image.new("RGB", (16, 16), color="blue")
         examples = [
@@ -48,7 +50,7 @@ class TestColPaliCollator:
             },
         ]
 
-        result = colpali_collator(examples)
+        result = colmodernvbert_collator(examples)
 
         assert isinstance(result, dict)
         assert "doc_input_ids" in result
