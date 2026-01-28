@@ -54,27 +54,15 @@ train = [
     "typer>=0.15.1",
 ]
 
-interpretability = [
-    "einops>=0.8.0,<1.0.0",
-    "matplotlib>=3.9.0,<4.0.0",
-    "seaborn>=0.13.2,<1.0.0",
-]
-
-dev = ["pytest>=8.0.0", "ruff>=0.4.0"]
+dev = ["ruff>=0.4.0"]
 
 all = [
     "colpali-engine[dev]",
-    "colpali-engine[interpretability]",
     "colpali-engine[train]",
 ]
 
 [project.urls]
 homepage = "https://github.com/illuin-tech/colpali"
-
-[tool.pytest.ini_options]
-filterwarnings = ["ignore::Warning"]
-markers = ["slow: marks test as slow"]
-testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
