@@ -1,15 +1,8 @@
 # ruff: noqa: N806, N812
 import pytest
 import torch
-import torch.nn.functional as F
 
-from colpali_engine.loss import (
-    ColbertLoss,
-    ColbertModule,
-    ColbertNegativeCELoss,
-    ColbertPairwiseCELoss,
-    ColbertPairwiseNegativeCELoss,
-)
+from colpali_engine.loss import ColbertLoss, ColbertModule
 
 
 class TestColbertModule:
@@ -98,84 +91,3 @@ class TestColbertLoss:
         query = torch.zeros(B, Nq, D)
         doc = torch.zeros(B, Nq, D)
         assert torch.allclose(base(query, doc), filt(query, doc))
-
-
-class TestColbertNegativeCELoss:
-    def test_no_inbatch(self):
-        loss_fn = ColbertNegativeCELoss(
-            temperature=1.0,
-            normalize_scores=False,
-            use_smooth_max=False,
-            pos_aware_negative_filtering=False,
-            in_batch_term_weight=0,
-        )
-        B, Lq, D, Lneg, Nneg = 2, 1, 3, 1, 1
-        query = torch.zeros(B, Lq, D)
-        doc = torch.zeros(B, Lq, D)
-        neg = torch.zeros(B, Nneg, Lneg, D)
-        loss = loss_fn(query, doc, neg)
-        expected = F.softplus(torch.tensor(0.0))
-        assert torch.allclose(loss, expected)
-
-    def test_with_inbatch(self):
-        loss_fn = ColbertNegativeCELoss(
-            temperature=1.0,
-            normalize_scores=False,
-            use_smooth_max=False,
-            pos_aware_negative_filtering=False,
-            in_batch_term_weight=0.5,
-        )
-        B, Lq, D, Lneg, Nneg = 2, 1, 3, 1, 1
-        query = torch.zeros(B, Lq, D)
-        doc = torch.zeros(B, Lq, D)
-        neg = torch.zeros(B, Nneg, Lneg, D)
-        loss = loss_fn(query, doc, neg)
-        expected = F.softplus(torch.tensor(0.0))
-        assert torch.allclose(loss, expected)
-
-
-class TestColbertPairwiseCELoss:
-    def test_zero_embeddings(self):
-        loss_fn = ColbertPairwiseCELoss(
-            temperature=1.0, normalize_scores=False, use_smooth_max=False, pos_aware_negative_filtering=False
-        )
-        B, Nq, D = 2, 1, 3
-        query = torch.zeros(B, Nq, D)
-        doc = torch.zeros(B, Nq, D)
-        loss = loss_fn(query, doc)
-        expected = F.softplus(torch.tensor(0.0))
-        assert torch.allclose(loss, expected)
-
-
-class TestColbertPairwiseNegativeCELoss:
-    def test_no_inbatch(self):
-        loss_fn = ColbertPairwiseNegativeCELoss(
-            temperature=1.0,
-            normalize_scores=False,
-            use_smooth_max=False,
-            pos_aware_negative_filtering=False,
-            in_batch_term_weight=0,
-        )
-        B, Lq, D, Lneg, Nneg = 2, 1, 3, 1, 1
-        query = torch.zeros(B, Lq, D)
-        doc = torch.zeros(B, Lq, D)
-        neg = torch.zeros(B, Nneg, Lneg, D)
-        loss = loss_fn(query, doc, neg)
-        expected = F.softplus(torch.tensor(0.0))
-        assert torch.allclose(loss, expected)
-
-    def test_with_inbatch(self):
-        loss_fn = ColbertPairwiseNegativeCELoss(
-            temperature=1.0,
-            normalize_scores=False,
-            use_smooth_max=False,
-            pos_aware_negative_filtering=False,
-            in_batch_term_weight=0.5,
-        )
-        B, Lq, D, Lneg, Nneg = 2, 1, 3, 1, 1
-        query = torch.zeros(B, Lq, D)
-        doc = torch.zeros(B, Lq, D)
-        neg = torch.zeros(B, Nneg, Lneg, D)
-        loss = loss_fn(query, doc, neg)
-        expected = F.softplus(torch.tensor(0.0))
-        assert torch.allclose(loss, expected)
