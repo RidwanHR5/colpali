@@ -1,6 +1,7 @@
 # ColPali: Efficient Document Retrieval with Vision Language Models 👀
 
 [![arXiv](https://img.shields.io/badge/arXiv-2407.01449-b31b1b.svg?style=for-the-badge)](https://arxiv.org/abs/2407.01449)
+[![arXiv](https://img.shields.io/badge/arXiv-ModernVBERT-2510.01149-b31b1b.svg?style=for-the-badge)](https://arxiv.org/html/2510.01149v1)
 [![GitHub](https://img.shields.io/badge/ViDoRe_Benchmark-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/illuin-tech/vidore-benchmark)
 [![Hugging Face](https://img.shields.io/badge/Vidore_Hf_Space-FFD21E?style=for-the-badge&logo=huggingface&logoColor=000)](https://huggingface.co/vidore)
 [![GitHub](https://img.shields.io/badge/Cookbooks-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tonywu71/colpali-cookbooks)
@@ -11,40 +12,35 @@
 
 ---
 
-[[Model card]](https://huggingface.co/vidore/colpali)
+> **Note**: This is a modified version of the [ColPali repository](https://github.com/illuin-tech/colpali) focused on training and evaluating **ColModernVBERT** models. The original repository supports multiple vision retrieval models, while this fork is specialized for the ModernVBERT architecture.
+
+[[Model card]](https://huggingface.co/ModernVBERT/colmodernvbert)
 [[ViDoRe Leaderboard]](https://huggingface.co/spaces/vidore/vidore-leaderboard)
 [[Demo]](https://huggingface.co/spaces/manu/ColPali-demo)
 [[Blog Post]](https://huggingface.co/blog/manu/colpali)
 
-## Associated Paper
+## Associated Papers
 
-This repository contains the code used for training the vision retrievers in the [*ColPali: Efficient Document Retrieval with Vision Language Models*](https://arxiv.org/abs/2407.01449) paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture and the PaliGemma model.
+This repository contains the code used for training vision retrievers, with a focus on **ColModernVBERT** from the [*ModernVBERT: Towards Smaller Visual Document Retrievers*](https://arxiv.org/html/2510.01149v1) paper. It is based on the [*ColPali: Efficient Document Retrieval with Vision Language Models*](https://arxiv.org/abs/2407.01449) framework.
 
 ## Introduction
 
-With our new model *ColPali*, we propose to leverage VLMs to construct efficient multi-vector embeddings in the visual space for document retrieval. By feeding the ViT output patches from PaliGemma-3B to a linear projection, we create a multi-vector representation of documents. We train the model to maximize the similarity between these document embeddings and the query embeddings, following the ColBERT method.
+**ColModernVBERT** is a compact 250M-parameter vision-language encoder that outperforms models up to 10 times larger when finetuned on document retrieval tasks. It leverages the ColBERT late-interaction architecture with ModernVBERT, a model that combines a pretrained language encoder (ModernBERT) with a vision encoder (SigLIP-2) through Masked Language Modeling (MLM) alignment.
 
-Using ColPali removes the need for potentially complex and brittle layout recognition and OCR pipelines with a single model that can take into account both the textual and visual content (layout, charts, ...) of a document.
+The model is trained in three phases:
+1. **Phase 1**: Text-only ModernBERT base model (`answerdotai/ModernBERT-base`)
+2. **Phase 2**: Vision-language alignment (`ModernVBERT/modernvbert`) - SigLIP-2 connected to ModernBERT using 2.5B image-text pairs
+3. **Phase 3**: Contrastive fine-tuning for retrieval (`ModernVBERT/colmodernvbert`) - The final retrieval model
+
+Using ColModernVBERT removes the need for potentially complex and brittle layout recognition and OCR pipelines with a single model that can take into account both the textual and visual content (layout, charts, ...) of a document.
 
 ![ColPali Architecture](assets/colpali_architecture.webp)
 
-## List of ColVision models
+## Supported Models
 
-| Model                                                               | Score on [ViDoRe](https://huggingface.co/spaces/vidore/vidore-leaderboard) 🏆 | License    | Comments                                                                                                                                                       | Currently supported |
-|---------------------------------------------------------------------|-------------------------------------------------------------------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|
-| [vidore/colpali](https://huggingface.co/vidore/colpali)             | 81.3                                                                          | Gemma      | • Based on `google/paligemma-3b-mix-448`.<br />• Checkpoint used in the ColPali paper.                                                                         | ❌                   |
-| [vidore/colpali-v1.1](https://huggingface.co/vidore/colpali-v1.1)   | 81.5                                                                          | Gemma      | • Based on `google/paligemma-3b-mix-448`.<br />• Fix right padding for queries.                                                                                | ✅                   |
-| [vidore/colpali-v1.2](https://huggingface.co/vidore/colpali-v1.2)   | 83.9                                                                          | Gemma      | • Similar to `vidore/colpali-v1.1`.                                                                                                                            | ✅                   |
-| [vidore/colpali-v1.3](https://huggingface.co/vidore/colpali-v1.3)   | 84.8                                                                          | Gemma      | • Similar to `vidore/colpali-v1.2`.<br />• Trained with a larger effective batch size of 256 batch size for 3 epochs.                                          | ✅                   |
-| [vidore/colqwen2-v0.1](https://huggingface.co/vidore/colqwen2-v0.1) | 87.3                                                                          | Apache 2.0 | • Based on `Qwen/Qwen2-VL-2B-Instruct`.<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page and an effective batch size of 32. | ✅                   |
-| [vidore/colqwen2-v1.0](https://huggingface.co/vidore/colqwen2-v1.0) | 89.3                                                                          | Apache 2.0 | • Similar to `vidore/colqwen2-v0.1`, but trained with more powerful GPUs and with a larger effective batch size (256).                                         | ✅                   |
-| [vidore/colqwen2.5-v0.1](https://huggingface.co/vidore/colqwen2.5-v0.1) | 88.8                                                                          | Apache 2.0 | • Based on `Qwen/Qwen2 5-VL-3B-Instruct`<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page and an effective batch size of 32.                                         | ✅                   |
-| [vidore/colqwen2.5-v0.2](https://huggingface.co/vidore/colqwen2.5-v0.2) | 89.4                                                                          | Apache 2.0 | • Similar to `vidore/colqwen2.5-v0.1`, but trained with slightly different hyper parameters                                        | ✅                   |
-| [TomoroAI/tomoro-colqwen3-embed-4b](https://huggingface.co/TomoroAI/tomoro-colqwen3-embed-4b) | 90.6                                                                           | Apache 2.0 | • Based on the Qwen3-VL backbone.<br />• 320-dim ColBERT-style embeddings with dynamic resolution.<br />• Trained for multi-vector document retrieval.          | ✅                   |
-| [vidore/colSmol-256M](https://huggingface.co/vidore/colSmol-256M)   | 80.1                                                                          | Apache 2.0 | • Based on `HuggingFaceTB/SmolVLM-256M-Instruct`.                                                                                                              | ✅                   |
-| [vidore/colSmol-500M](https://huggingface.co/vidore/colSmol-500M)   | 82.3                                                                          | Apache 2.0 | • Based on `HuggingFaceTB/SmolVLM-500M-Instruct`.                                                                                                              | ✅                   |
-| [Cognitive-Lab/ColNetraEmbed](https://huggingface.co/Cognitive-Lab/ColNetraEmbed) | 86.4                                                                          | Gemma      | • Based on `google/gemma-3-4b-it`.<br />• Multi-vector late interaction retrieval model.<br />• Multilingual support across 22 languages.      | ✅                   |
-| [Cognitive-Lab/NetraEmbed](https://huggingface.co/Cognitive-Lab/NetraEmbed)       | 81.0                                                                          | Gemma      | • Based on `google/gemma-3-4b-it`.<br />• Bi-encoder retrieval model.<br />• Supports Matryoshka embeddings (768, 1536, 2560).<br />• Multilingual support across 22 languages. | ✅                   |
+| Model | Score on [ViDoRe](https://huggingface.co/spaces/vidore/vidore-leaderboard) 🏆 | License | Comments | Currently supported |
+|-------|-------------------------------------------------------------------------------|---------|----------|---------------------|
+| [ModernVBERT/colmodernvbert](https://huggingface.co/ModernVBERT/colmodernvbert) | 81.2 (v1) / 56.0 (v2) | Apache 2.0 | • 250M parameters<br />• Based on ModernBERT + SigLIP-2<br />• Multi-vector late-interaction retrieval | ✅ |
 
 ## Setup
 
@@ -69,18 +65,18 @@ import torch
 from PIL import Image
 from transformers.utils.import_utils import is_flash_attn_2_available
 
-from colpali_engine.models import ColQwen2, ColQwen2Processor
+from colpali_engine.models import ColModernVBert, ColModernVBertProcessor
 
-model_name = "vidore/colqwen2-v1.0"
+model_name = "ModernVBERT/colmodernvbert"
 
-model = ColQwen2.from_pretrained(
+model = ColModernVBert.from_pretrained(
     model_name,
     torch_dtype=torch.bfloat16,
     device_map="cuda:0",  # or "mps" if on Apple Silicon
     attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
 ).eval()
 
-processor = ColQwen2Processor.from_pretrained(model_name)
+processor = ColModernVBertProcessor.from_pretrained(model_name)
 
 # Your inputs
 images = [
@@ -104,196 +100,13 @@ with torch.no_grad():
 scores = processor.score_multi_vector(query_embeddings, image_embeddings)
 ```
 
-We now support `fast-plaid` experimentally to make matching quicker for larger corpus sizes:
-
-```python
-# !pip install --no-deps fast-plaid fastkmeans
-
-# Process the inputs by batches of 4
-dataloader = DataLoader(
-    dataset=images,
-    batch_size=4,
-    shuffle=False,
-    collate_fn=lambda x: processor.process_images(x),
-)
-
-ds  = []
-for batch_doc in tqdm(dataloader):
-    with torch.no_grad():
-        batch_doc = {k: v.to(model.device) for k, v in batch_doc.items()}
-        embeddings_doc = model(**batch_doc)
-    ds.extend(list(torch.unbind(embeddings_doc.to("cpu"))))
-
-plaid_index = processor.create_plaid_index(ds)
-
-scores = processor.get_topk_plaid(query_embeddings, plaid_index, k=10)
-```
-
 ### Benchmarking
 
-To benchmark ColPali on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
-
-### Interpretability with similarity maps
-
-By superimposing the late interaction similarity maps on top of the original image, we can visualize the most salient image patches with respect to each term of the query, yielding interpretable insights into model focus zones.
-
-To use the `interpretability` module, you need to install the `colpali-engine[interpretability]` package:
-
-```bash
-pip install colpali-engine[interpretability]
-```
-
-Then, after generating your embeddings with ColPali, use the following code to plot the similarity maps for each query token:
-
-<details>
-<summary><strong>🔽 Click to expand code snippet</strong></summary>
-
-```python
-import torch
-from PIL import Image
-
-from colpali_engine.interpretability import (
-    get_similarity_maps_from_embeddings,
-    plot_all_similarity_maps,
-)
-from colpali_engine.models import ColPali, ColPaliProcessor
-from colpali_engine.utils.torch_utils import get_torch_device
-
-model_name = "vidore/colpali-v1.3"
-device = get_torch_device("auto")
-
-# Load the model
-model = ColPali.from_pretrained(
-    model_name,
-    torch_dtype=torch.bfloat16,
-    device_map=device,
-).eval()
-
-# Load the processor
-processor = ColPaliProcessor.from_pretrained(model_name)
-
-# Load the image and query
-image = Image.open("shift_kazakhstan.jpg")
-query = "Quelle partie de la production pétrolière du Kazakhstan provient de champs en mer ?"
-
-# Preprocess inputs
-batch_images = processor.process_images([image]).to(device)
-batch_queries = processor.process_queries([query]).to(device)
-
-# Forward passes
-with torch.no_grad():
-    image_embeddings = model.forward(**batch_images)
-    query_embeddings = model.forward(**batch_queries)
-
-# Get the number of image patches
-n_patches = processor.get_n_patches(image_size=image.size, patch_size=model.patch_size)
-
-# Get the tensor mask to filter out the embeddings that are not related to the image
-image_mask = processor.get_image_mask(batch_images)
-
-# Generate the similarity maps
-batched_similarity_maps = get_similarity_maps_from_embeddings(
-    image_embeddings=image_embeddings,
-    query_embeddings=query_embeddings,
-    n_patches=n_patches,
-    image_mask=image_mask,
-)
-
-# Get the similarity map for our (only) input image
-similarity_maps = batched_similarity_maps[0]  # (query_length, n_patches_x, n_patches_y)
-
-# Tokenize the query
-query_tokens = processor.tokenizer.tokenize(query)
-
-# Plot and save the similarity maps for each query token
-plots = plot_all_similarity_maps(
-    image=image,
-    query_tokens=query_tokens,
-    similarity_maps=similarity_maps,
-)
-for idx, (fig, ax) in enumerate(plots):
-    fig.savefig(f"similarity_map_{idx}.png")
-```
-
-</details>
-
-For a more detailed example, you can refer to the interpretability notebooks from the [ColPali Cookbooks 👨🏻‍🍳](https://github.com/tonywu71/colpali-cookbooks) repository.
-
-### Token pooling
-
-[Token pooling](https://doi.org/10.48550/arXiv.2409.14683) is a CRUDE-compliant method (document addition/deletion-friendly) that aims at reducing the sequence length of multi-vector embeddings. For ColPali, many image patches share redundant information, e.g. white background patches. By pooling these patches together, we can reduce the amount of embeddings while retaining most of the page's signal. Retrieval performance with hierarchical mean token pooling on image embeddings can be found in the [ColPali paper](https://doi.org/10.48550/arXiv.2407.01449). In our experiments, we found that a pool factor of 3 offered the optimal trade-off: the total number of vectors is reduced by $66.7\%$ while $97.8\%$ of the original performance is maintained.
-
-To use token pooling, you can use the `HierarchicalEmbeddingPooler` class from the `colpali-engine` package:
-
-<details>
-<summary><strong>🔽 Click to expand code snippet</strong></summary>
-
-```python
-import torch
-
-from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
-
-# Dummy multivector embeddings
-list_embeddings = [
-    torch.rand(10, 768),
-    torch.rand(20, 768),
-]
-
-# Define the pooler with the desired level of compression
-pooler = HierarchicalTokenPooler()
-
-# Pool the embeddings
-outputs = pooler.pool_embeddings(list_embeddings, pool_factor=2)
-```
-
-If your inputs are padded 3D tensor embeddings instead of lists of 2D tensors, use `padding=True` and specify the padding used by your tokenizer to make sure the `HierarchicalTokenPooler` correctly removes the padding values before pooling:
-
-```python
-import torch
-from PIL import Image
-from transformers.utils.import_utils import is_flash_attn_2_available
-
-from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
-from colpali_engine.models import ColQwen2, ColQwen2Processor
-
-model_name = "vidore/colqwen2-v1.0"
-model = ColQwen2.from_pretrained(
-    model_name,
-    torch_dtype=torch.bfloat16,
-    device_map="cuda:0",  # or "mps" if on Apple Silicon
-    attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
-).eval()
-processor = ColQwen2Processor.from_pretrained(model_name)
-
-token_pooler = HierarchicalTokenPooler()
-
-# Your page images
-images = [
-    Image.new("RGB", (128, 128), color="white"),
-    Image.new("RGB", (32, 32), color="black"),
-]
-
-# Process the inputs
-batch_images = processor.process_images(images).to(model.device)
-
-# Forward pass
-with torch.no_grad():
-    image_embeddings = model(**batch_images)
-
-# Apply token pooling (reduces the sequence length of the multi-vector embeddings)
-image_embeddings = token_pooler.pool_embeddings(
-    image_embeddings,
-    pool_factor=2,
-    padding=True,
-    padding_side=processor.tokenizer.padding_side,
-)
-```
-
-</details>
+To benchmark ColModernVBERT on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
 
 ### Training
 
-To keep a lightweight repository, only the essential packages were installed. In particular, you must specify the dependencies to use the training script for ColPali. You can do this using the following command:
+To keep a lightweight repository, only the essential packages were installed. In particular, you must specify the dependencies to use the training script. You can do this using the following command:
 
 ```bash
 pip install "colpali-engine[train]"
@@ -301,44 +114,55 @@ pip install "colpali-engine[train]"
 
 All the model configs used can be found in `scripts/configs/` and rely on the [configue](https://github.com/illuin-tech/configue) package for straightforward configuration. They should be used with the `train_colbert.py` script.
 
-<details>
-<summary><strong>🔽 Example 1: Local training</strong></summary>
+#### Training ColModernVBERT
 
+This repository is configured to train ColModernVBERT starting from the Phase 3 checkpoint (`ModernVBERT/colmodernvbert`). The training configuration is optimized for a single GPU with 16GB VRAM.
 
-```bash
-accelerate launch --multi-gpu scripts/configs/qwen2/train_colqwen25_model.py
-```
-
-</details>
-
-<details>
-<summary><strong>🔽 Example 2: Training on a SLURM cluster</strong></summary>
+**Important**: Before training, set the environment variable to load datasets from HuggingFace:
 
 ```bash
-sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gpu:1  -p gpua100 --job-name=colidefics --output=colidefics.out --error=colidefics.err --wrap="accelerate launch scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml"
+# Linux/Mac
+export USE_LOCAL_DATASET=0
 
-sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="accelerate launch --multi-gpu scripts/configs/qwen2/train_colqwen25_model.py"
+# Windows
+set USE_LOCAL_DATASET=0
 ```
 
-</details>
+**Training command**:
+
+```bash
+python scripts/train/train_colbert.py scripts/configs/train_colmodernvbert_16gb.yaml
+```
+
+Or with accelerate for multi-GPU training:
+
+```bash
+accelerate launch scripts/train/train_colbert.py scripts/configs/train_colmodernvbert_16gb.yaml
+```
+
+**Configuration details**:
+- **Model**: Starts from `ModernVBERT/colmodernvbert` (Phase 3 checkpoint)
+- **Training dataset**: `vidore/colpali_train_set` (loaded from HuggingFace)
+- **Evaluation datasets**: All 10 ViDoRe test datasets (configured in `scripts/configs/data/test_data.yaml`)
+- **Training epochs**: 3
+- **Effective batch size**: 8 (per_device_train_batch_size: 1 × gradient_accumulation_steps: 8)
+- **Learning rate**: 5e-5
+- **Mixed precision**: bfloat16
+
+The training script will:
+1. Load the pretrained ColModernVBERT model
+2. Train on the colpali_train_set
+3. Evaluate on all 10 test datasets during training (every 500 steps)
+4. Save checkpoints to `./output/colmodernvbert/`
+
+**After training**:
+- The trained model will be saved in `./output/colmodernvbert/`
+- To evaluate on test splits, use the `vidore-benchmark` package
+- To benchmark on the benchmark split, submit to the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard)
 
 ## Contributing
 
-We welcome contributions to ColPali! 🤗
-
-To contribute to ColPali, first install the development dependencies for proper testing/linting:
-
-```bash
-pip install "colpali-engine[dev]"
-```
-
-To run all the tests, you will have to install all optional dependencies (or you'll get an error in test discovery):
-
-```bash
-pip install "colpali-engine[all]"
-```
-
-When your PR is ready, ping one of the repository maintainers. We will do our best to review it as soon as possible!
+This is a modified version of the ColPali repository. For contributions to the main ColPali project, please refer to the [original repository](https://github.com/illuin-tech/colpali).
 
 ## Community Projects
 
@@ -418,19 +242,23 @@ Several community projects and ressources have been developed around ColPali to 
 
 </details>
 
-## Paper result reproduction
-
-To reproduce the results from the paper, you should checkout to the `v0.1.1` tag or install the corresponding `colpali-engine` package release using:
-
-```bash
-pip install colpali-engine==0.1.1
-```
-
 ## Citation
 
-**ColPali: Efficient Document Retrieval with Vision Language Models**  
+**ModernVBERT: Towards Smaller Visual Document Retrievers**
 
-Authors: **Manuel Faysse**\*, **Hugues Sibille**\*, **Tony Wu**\*, Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo (\* denotes equal contribution)
+```latex
+@misc{teiletche2025modernvberttowardssmallervisual,
+      title={ModernVBERT: Towards Smaller Visual Document Retrievers}, 
+      author={Paul Teiletche and Quentin Macé and Max Conti and Antonio Loison and Gautier Viaud and Pierre Colombo and Manuel Faysse},
+      year={2025},
+      eprint={2510.01149},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/html/2510.01149v1}, 
+}
+```
+
+**ColPali: Efficient Document Retrieval with Vision Language Models**
 
 ```latex
 @misc{faysse2024colpaliefficientdocumentretrieval,
@@ -442,7 +270,11 @@ Authors: **Manuel Faysse**\*, **Hugues Sibille**\*, **Tony Wu**\*, Bilel Omrani,
       primaryClass={cs.IR},
       url={https://arxiv.org/abs/2407.01449}, 
 }
+```
 
+**ViDoRe Benchmark V2: Raising the Bar for Visual Retrieval**
+
+```latex
 @misc{macé2025vidorebenchmarkv2raising,
       title={ViDoRe Benchmark V2: Raising the Bar for Visual Retrieval}, 
       author={Quentin Macé and António Loison and Manuel Faysse},
