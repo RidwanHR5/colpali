@@ -22,6 +22,7 @@ config:
   
   train_dataset:
     (): colpali_engine.utils.dataset_transformation.load_train_set
+    filter_by_source: "tatdqa"
   
   eval_dataset:
     syntheticDocQA_energy:

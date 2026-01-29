@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
 from PIL import Image
@@ -9,9 +9,20 @@ from colpali_engine.data.dataset import ColPaliEngineDataset, Corpus
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 
 
-def load_train_set() -> ColPaliEngineDataset:
+def load_train_set(filter_by_source: Optional[str] = None) -> ColPaliEngineDataset:
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
     dataset = load_dataset(base_path + "colpali_train_set", split="train")
+
+    # Apply source filter if specified
+    if filter_by_source is not None and hasattr(dataset, 'column_names') and 'source' in dataset.column_names:
+        original_size = len(dataset)
+        dataset = dataset.filter(lambda x: x['source'] == filter_by_source)
+        if len(dataset) == 0:
+            raise ValueError(
+                f"Filter resulted in empty dataset. No samples with source='{filter_by_source}' found. "
+                f"Original dataset size: {original_size}"
+            )
+        print(f"Filtered dataset by source='{filter_by_source}'. Dataset size: {len(dataset)} (from {original_size})")
 
     train_dataset = ColPaliEngineDataset(dataset, pos_target_column_name="image")
 
