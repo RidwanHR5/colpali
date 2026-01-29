@@ -10,6 +10,7 @@
 # datasets to the default cache directory.
 
 config:
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
   model:
     (): colpali_engine.models.ColModernVBert.from_pretrained
     pretrained_model_name_or_path: "ModernVBERT/colmodernvbert"

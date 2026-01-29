@@ -65,6 +65,12 @@ class ContrastiveTrainer(Trainer):
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")
 
+        # Initialize prefixes from data collator (needed for compute_loss)
+        if not hasattr(self, 'query_prefix') or self.query_prefix is None:
+            self.query_prefix = self.data_collator.query_prefix
+            self.pos_prefix = self.data_collator.pos_doc_prefix
+            self.neg_prefix = self.data_collator.neg_doc_prefix
+
         if self.train_dataset_list is None:
             # If no dataset list, use the default behavior
             return super().get_train_dataloader()
@@ -116,9 +122,9 @@ class ContrastiveTrainer(Trainer):
 
         return self.accelerator.prepare(dataloader)
 
-    def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
+    def _get_train_sampler(self, dataset=None) -> Optional[torch.utils.data.Sampler]:
         if self.train_dataset_list is None:
-            return super()._get_train_sampler()
+            return super()._get_train_sampler(dataset)
 
         # Use SingleDatasetBatchSampler to ensure that each dataset in the list is sampled independently
         # Note: Surely breaks in distributed training
