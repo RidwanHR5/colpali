@@ -1,0 +1,53 @@
+# Training configuration for ColModernVBert on single GPU with 16GB VRAM
+# 
+# IMPORTANT: To ensure datasets load from HuggingFace and cache to default location
+# (~/.cache/huggingface/datasets), set the environment variable before running:
+#   export USE_LOCAL_DATASET=0
+# Or on Windows:
+#   set USE_LOCAL_DATASET=0
+#
+# The load_dataset() function from HuggingFace datasets will automatically cache
+# datasets to the default cache directory.
+
+config:
+  model:
+    (): colpali_engine.models.ColModernVBert.from_pretrained
+    pretrained_model_name_or_path: "ModernVBERT/colmodernvbert"
+    torch_dtype: "bfloat16"
+    device_map: "cuda:0"
+  
+  processor:
+    (): colpali_engine.models.ColModernVBertProcessor.from_pretrained
+    pretrained_model_name_or_path: "ModernVBERT/colmodernvbert"
+  
+  train_dataset:
+    (): colpali_engine.utils.dataset_transformation.load_train_set
+  
+  eval_dataset:
+    syntheticDocQA_energy:
+      (): colpali_engine.utils.dataset_transformation.load_eval_set
+      dataset_path: "vidore/syntheticDocQA_energy_test"
+  
+  tr_args:
+    (): transformers.training_args.TrainingArguments
+    output_dir: "./output/colmodernvbert"
+    overwrite_output_dir: true
+    num_train_epochs: 3
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 8
+    per_device_eval_batch_size: 1
+    eval_strategy: "steps"
+    dataloader_num_workers: 2
+    bf16: true
+    gradient_checkpointing: true
+    save_steps: 500
+    logging_steps: 10
+    eval_steps: 500
+    warmup_steps: 500
+    learning_rate: 5e-5
+    save_total_limit: 2
+  
+  max_length: 256
+  run_train: true
+  run_eval: true
+  output_dir: "./output/colmodernvbert"
