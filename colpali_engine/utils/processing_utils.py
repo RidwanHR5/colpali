@@ -273,7 +273,7 @@ class Idefics3SplitImageInterpretabilityMixin:
     3. Each sub-patch becomes image_seq_len tokens (e.g., 64 tokens in an 8x8 grid)
     4. A global patch is added as the last image_seq_len tokens
 
-    ColModernVBertProcessor and other processors with image splitting use this pattern.
+    Both ColIdefics3Processor and ColModernVBertProcessor use this pattern.
     """
 
     # These attributes must be provided by the implementing class

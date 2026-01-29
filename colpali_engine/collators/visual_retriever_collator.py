@@ -36,23 +36,20 @@ class VisualRetrieverCollator:
         self.max_length = max_length
         self.image_token_id = None
 
-        # Extract the <image> token id if available in the processor's tokenizer.
-        if hasattr(self.processor, "tokenizer") and hasattr(self.processor.tokenizer, "additional_special_tokens"):
-            image_token = "<image>"
+        # Generic image token detection (assuming processor has a tokenizer and image_token attribute)
+        if hasattr(self.processor, "tokenizer") and hasattr(self.processor, "image_token"):
             try:
-                idx = self.processor.tokenizer.additional_special_tokens.index(image_token)
+                idx = self.processor.tokenizer.additional_special_tokens.index(self.processor.image_token)
                 self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[idx]
             except (ValueError, AttributeError):
                 self.image_token_id = None
 
-        # Adjust padding side if processor has a tokenizer attribute.
-        # Some processors require specific padding sides for proper processing.
+        # Generic padding side setting (assuming processor has a tokenizer)
         if hasattr(self.processor, "tokenizer") and hasattr(self.processor.tokenizer, "padding_side"):
-            # Check if processor has a preferred padding side attribute
-            if hasattr(self.processor, "tokenizer") and self.processor.tokenizer.padding_side != "right":
-                # Only change if there's a specific requirement - for now, keep current behavior
-                # Individual processors can set their preferred padding side during initialization
-                pass
+            # If a specific padding side is required, it should be set in the processor's __init__
+            # or passed as an argument to the collator if it needs to override processor's default.
+            # For now, rely on the processor's default padding_side.
+            pass
 
     def __call__(self, examples: List[Dict[str, Any]]) -> Dict[str, Any]:
         queries: List[Union[None, str, Image]] = []
