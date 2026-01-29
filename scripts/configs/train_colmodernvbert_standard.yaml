@@ -1,0 +1,36 @@
+# Training configuration for ColModernVBert following original ColPali standard
+# 
+# IMPORTANT: To ensure datasets load from HuggingFace and cache to default location
+# (~/.cache/huggingface/datasets), set the environment variable before running:
+#   export USE_LOCAL_DATASET=0
+# Or on Windows:
+#   set USE_LOCAL_DATASET=0
+#
+# The load_dataset() function from HuggingFace datasets will automatically cache
+# datasets to the default cache directory.
+
+config:
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
+  output_dir: !path ../../../output/colmodernvbert_standard
+  processor:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColModernVBertProcessor
+    pretrained_model_name_or_path: "ModernVBERT/colmodernvbert"
+  model:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColModernVBert
+    pretrained_model_name_or_path: "ModernVBERT/colmodernvbert"
+    torch_dtype: !ext torch.bfloat16
+    device_map: "cuda:0"
+
+  train_dataset: 
+    (): colpali_engine.utils.dataset_transformation.load_train_set
+    filter_by_source: "tatdqa"
+  eval_dataset: !import ../data/test_data.yaml
+
+  max_length: 256
+  run_eval: true
+  run_train: true
+  loss_func:
+    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
+  tr_args: !import ../tr_args/default_tr_args.yaml

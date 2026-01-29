@@ -116,7 +116,10 @@ All the model configs used can be found in `scripts/configs/` and rely on the [c
 
 #### Training ColModernVBERT
 
-This repository is configured to train ColModernVBERT starting from the Phase 3 checkpoint (`ModernVBERT/colmodernvbert`). The training configuration is optimized for a single GPU with 16GB VRAM.
+This repository is configured to train ColModernVBERT starting from the Phase 3 checkpoint (`ModernVBERT/colmodernvbert`). Two training configuration files are available:
+
+1. **`train_colmodernvbert_16gb.yaml`**: Optimized for single GPU with 16GB VRAM, uses custom training hyperparameters
+2. **`train_colmodernvbert_standard.yaml`**: Follows the original ColPali standard format, uses default ColPali training arguments and infrastructure
 
 **Important**: Before training, set the environment variable to load datasets from HuggingFace:
 
@@ -128,35 +131,71 @@ export USE_LOCAL_DATASET=0
 set USE_LOCAL_DATASET=0
 ```
 
-**Training command**:
+##### Available Configurations
+
+| Config File | Best For | Key Features |
+|------------|----------|--------------|
+| `train_colmodernvbert_16gb.yaml` | Single GPU with limited VRAM | • Custom training hyperparameters (3 epochs, batch size 1, gradient accumulation 8)<br />• Direct model instantiation<br />• Inline training arguments |
+| `train_colmodernvbert_standard.yaml` | Compatibility with original ColPali infrastructure | • Follows original ColPali standard format<br />• Uses `ColModelTrainingConfig` wrapper<br />• Uses `AllPurposeWrapper` for model/processor<br />• Uses `!import` directives for training args and eval datasets<br />• Uses default ColPali training arguments (1 epoch, batch size 4) |
+
+Both configs support Phase 1 training (filtered by `source="tatdqa"`) and can be modified for Phase 2 (multi-dataset training).
+
+##### Training Commands
+
+**Using the 16GB optimized config**:
 
 ```bash
 python scripts/train/train_colbert.py scripts/configs/train_colmodernvbert_16gb.yaml
 ```
 
+**Using the standard ColPali config**:
+
+```bash
+python scripts/train/train_colbert.py scripts/configs/train_colmodernvbert_standard.yaml
+```
+
 Or with accelerate for multi-GPU training:
 
 ```bash
+# 16GB config
 accelerate launch scripts/train/train_colbert.py scripts/configs/train_colmodernvbert_16gb.yaml
+
+# Standard config
+accelerate launch scripts/train/train_colbert.py scripts/configs/train_colmodernvbert_standard.yaml
 ```
 
-**Configuration details**:
+##### Configuration Details
+
+**16GB Optimized Config** (`train_colmodernvbert_16gb.yaml`):
 - **Model**: Starts from `ModernVBERT/colmodernvbert` (Phase 3 checkpoint)
-- **Training dataset**: `vidore/colpali_train_set` (loaded from HuggingFace)
-- **Evaluation datasets**: All 10 ViDoRe test datasets (configured in `scripts/configs/data/test_data.yaml`)
+- **Training dataset**: `vidore/colpali_train_set` (loaded from HuggingFace, filtered by `source="tatdqa"` for Phase 1)
+- **Evaluation datasets**: Single dataset (`syntheticDocQA_energy_test`) or all 10 ViDoRe test datasets (configured in `scripts/configs/data/test_data.yaml`)
 - **Training epochs**: 3
 - **Effective batch size**: 8 (per_device_train_batch_size: 1 × gradient_accumulation_steps: 8)
 - **Learning rate**: 5e-5
 - **Mixed precision**: bfloat16
+- **Gradient checkpointing**: Enabled
+- **Output directory**: `./output/colmodernvbert/`
+
+**Standard ColPali Config** (`train_colmodernvbert_standard.yaml`):
+- **Model**: Starts from `ModernVBERT/colmodernvbert` (Phase 3 checkpoint)
+- **Training dataset**: `vidore/colpali_train_set` (loaded from HuggingFace, filtered by `source="tatdqa"` for Phase 1)
+- **Evaluation datasets**: All 10 ViDoRe test datasets (configured in `scripts/configs/data/test_data.yaml`)
+- **Training epochs**: 1 (from default ColPali training args)
+- **Effective batch size**: 4 (per_device_train_batch_size: 4)
+- **Learning rate**: 5e-5
+- **Mixed precision**: bfloat16 (via `!ext torch.bfloat16`)
+- **Output directory**: `../../../output/colmodernvbert_standard/` (relative to config file)
+- **Config structure**: Uses `ColModelTrainingConfig` wrapper, `AllPurposeWrapper`, and `!import`/`!ext` directives
 
 The training script will:
 1. Load the pretrained ColModernVBERT model
-2. Train on the colpali_train_set
-3. Evaluate on all 10 test datasets during training (every 500 steps)
-4. Save checkpoints to `./output/colmodernvbert/`
+2. Train on the colpali_train_set (filtered by source for Phase 1)
+3. Evaluate on test datasets during training
+4. Save checkpoints to the configured output directory
 
 **After training**:
-- The trained model will be saved in `./output/colmodernvbert/`
+- The trained model will be saved in the configured output directory
 - To evaluate on test splits, use the `vidore-benchmark` package
 - To benchmark on the benchmark split, submit to the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard)
 
