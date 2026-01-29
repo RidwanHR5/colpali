@@ -3,10 +3,10 @@ CLI to load a `colpali_engine` model from Hugging Face and save it.
 
 Example:
     python scripts/init_base_model.py \
-        --model-class colpali_engine.models.qwen3.colqwen3.ColQwen3 \
-        --model-name-or-path Qwen/Qwen3-VL-2B-Instruct \
-        --save-path ./models/colqwen3 \
-        --hf-repo vidore/colqwen3-base
+        --model-class colpali_engine.models.ColModernVBert \
+        --model-name-or-path ModernVBERT/colmodernvbert \
+        --save-path ./models/colmodernvbert \
+        --hf-repo your-username/colmodernvbert-base
 """
 
 import argparse
@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     # Required arguments
     parser.add_argument("--model-name-or-path", required=True, help="HF model ID or local path.")
     parser.add_argument(
-        "--model-class", required=True, help="Full class path (e.g., 'colpali_engine.models.ColQwen3')."
+        "--model-class", required=True, help="Full class path (e.g., 'colpali_engine.models.ColModernVBert')."
     )
     parser.add_argument("--save-path", required=True, help="Target directory for the model.")
 
