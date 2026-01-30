@@ -88,6 +88,20 @@ class ColModelTraining:
         )
 
     def train(self) -> None:
+        # Ensure all model parameters have requires_grad=True for training
+        for param in self.model.parameters():
+            param.requires_grad = True
+        
+        # Enable input require grads if gradient checkpointing is enabled
+        # This is needed for gradient checkpointing to work properly
+        if self.config.tr_args.gradient_checkpointing:
+            if hasattr(self.model, 'enable_input_require_grads'):
+                self.model.enable_input_require_grads()
+                print("Enabled input require grads for gradient checkpointing.")
+        
+        # Ensure model is in training mode
+        self.model.train()
+        
         trainer = ContrastiveTrainer(
             model=self.model,
             train_dataset=self.train_dataset,
